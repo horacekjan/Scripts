@@ -5,21 +5,13 @@ import numpy as np
 from pandas import DataFrame
 from pathlib import Path
 
-from Evaluator.PythonInterface import RegimeEvaluation
-
 
 def generate_policies(monthly_turnover_rate_bins: List[List[int]], n_regimes: int, n_policies: int, index_size):
-    # Turnover bins translation from evaluator.
-    for bin_idx, monthly_turnover_rate_bin in enumerate(monthly_turnover_rate_bins):
-        min_rate = int(monthly_turnover_rate_bin[0] * (1 + 0.3)/2)
-        max_rate = int(monthly_turnover_rate_bin[1] * (1 + 0.3)/2)
-        assert max_rate <= 21, 'max bin rate can not be larger than the number of days in month'
-        monthly_turnover_rate_bins[bin_idx] = [min_rate, max_rate]
-
     n_year = 252
     n_years_in_data = int(index_size / n_year)
     random_policies = {}
     for monthly_turnover_rate_bin in monthly_turnover_rate_bins:
+        assert monthly_turnover_rate_bin[1] <= 21, 'max bin rate can not be larger than the number of days in month'
         yearly_turnover_rate_bin = 12 * np.array(monthly_turnover_rate_bin)
         name = '_'.join([str(x) for x in monthly_turnover_rate_bin])
         random_policies[name] = []
@@ -78,37 +70,15 @@ def policy_report_generator(monthly_turnover_rate_bins: List[List[int]], data_fr
 
     for policy_bin, policies_list in policies.items():
         for i, policy in enumerate(policies_list):
+            source_folder = output_folder / 'source'
+            source_target = source_folder / f'Data-{policy_bin}-{i}.csv'
+            if not source_folder.exists():
+                source_folder.mkdir(parents=True)
+
             policy = pd.DataFrame(policy)
             policy.index = pd.to_datetime(resolved_index.index)
             policy.columns = ['policy']
             policy = expand_policy(policy)
-
-            evaluator = RegimeEvaluation(policy, index, True, dynamic_exposure)
-            eval_result = evaluator.edc()
-
-            result = eval_result[0].T.iloc[[-1]]
-            for name in sorted(eval_result[1]['Default-'].keys()):
-                value = eval_result[1]['Default-'][name]
-                post_fix = name.split('_')[-1]
-                result_line = value.iloc[[-1]]
-                columns = [f'{x}_{post_fix}' for x in result_line.columns]
-                result_line.columns = columns
-                result = pd.concat([result, result_line], axis=1, sort=False)
-
-            result = result.loc[:, ~result.columns.duplicated()]
-            result.model_id = f'policy-{i}'
-
-            eval_target = output_folder / Path(f'Data-{policy_bin}.csv')
-            source_folder = output_folder / 'source'
-            source_target = source_folder / f'Data-{policy_bin}-{i}.csv'
-
-            if not source_folder.exists():
-                source_folder.mkdir(parents=True)
-
-            if eval_target.exists():
-                result.to_csv(eval_target, mode='a', header=False, index=False)
-            else:
-                result.to_csv(eval_target, mode='w', header=True, index=False)
 
             policy.to_csv(source_target, mode='w', header=True, index=True)
 
@@ -116,13 +86,13 @@ def policy_report_generator(monthly_turnover_rate_bins: List[List[int]], data_fr
 if __name__ == '__main__':
     bins = [
         # SaP
-        [12, 16], # SAP main
+        [12, 16],  # SAP main
         # [17, 21],
         # [22,26]
 
         # Topix
         # [16, 20],
-        [20, 24], # TOPIX main
+        # [20, 24],  # TOPIX main
         # [25, 29],
         # [30, 34]
     ]
