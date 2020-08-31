@@ -80,19 +80,21 @@ def policy_report_generator(monthly_turnover_rate_bins: List[List[int]], data_fr
             policy.columns = ['policy']
             policy = expand_policy(policy)
 
+            policy = policy.astype(int)
+
             policy.to_csv(source_target, mode='w', header=True, index=True)
 
 
 if __name__ == '__main__':
     bins = [
         # SaP
-        [12, 16],  # SAP main
+        #[12, 16],  # SAP main
         # [17, 21],
         # [22,26]
 
         # Topix
         # [16, 20],
-        # [20, 24],  # TOPIX main
+        [20, 21],  # TOPIX main
         # [25, 29],
         # [30, 34]
     ]
@@ -100,7 +102,7 @@ if __name__ == '__main__':
     n_of_regimes = 5  # 3
     n_of_policies = 2
     df_index = 'eval_period'  # hold_out
-    target_index = 'sap'  # 'topix'
+    target_index = 'topix'  # 'topix'
     dynamic_exp = True
     out_folder = Path('Test')
 
