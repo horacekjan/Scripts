@@ -6,7 +6,7 @@ from tqdm import tqdm
 import pandas as pd
 
 index = 'SAP'
-dynamic_exposure = True
+dynamic_exposure = False
 
 
 def compute(file):
@@ -29,8 +29,8 @@ def compute(file):
 
 
 def main():
-    data_folder = Path('aws_data')
-    output_folder = Path('aws_output')
+    data_folder = Path('Test') / 'source'
+    output_folder = Path('Test')
     if not output_folder.exists():
         output_folder.mkdir(parents=True)
 
@@ -38,6 +38,7 @@ def main():
 
     size = len(list(data_folder.iterdir()))
     for result, policy_bin, i in tqdm(pool.imap_unordered(compute, data_folder.iterdir()), total=size):
+
         eval_target = output_folder / Path(f'Data-{policy_bin}.csv')
 
         if eval_target.exists():

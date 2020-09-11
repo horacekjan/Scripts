@@ -1,22 +1,21 @@
-import sys
-from typing import Union, List
-import pandas as pd
 import numpy as np
-from pandas import DataFrame
+from typing import List, Union
+import pandas as pd
 from pathlib import Path
+from pandas import DataFrame
+import sys
 
 
-def generate_policies(monthly_turnover_rate_bins: List[List[int]], n_regimes: int, n_policies: int, index_size):
-    n_year = 252
+def generate_policies(yearly_turnover_rate_bins: List[List[int]], n_regimes: int, n_policies: int, index_size,
+                      switch_expectation: int):
+    n_year = 260
     n_years_in_data = int(index_size / n_year)
     random_policies = {}
-    for monthly_turnover_rate_bin in monthly_turnover_rate_bins:
-        assert monthly_turnover_rate_bin[1] <= 21, 'max bin rate can not be larger than the number of days in month'
-        yearly_turnover_rate_bin = 12 * np.array(monthly_turnover_rate_bin)
-        name = '_'.join([str(x) for x in monthly_turnover_rate_bin])
+    for yearly_turnover_rate_bin in yearly_turnover_rate_bins:
+        name = '_'.join([str(x) for x in yearly_turnover_rate_bin])
         random_policies[name] = []
         for _ in range(n_policies):
-            yearly_turnover = np.random.uniform(*yearly_turnover_rate_bin)
+            yearly_turnover = np.random.uniform(*yearly_turnover_rate_bin) / switch_expectation
             data_turnover = np.math.floor(n_years_in_data * yearly_turnover)
             regime_change_periods = np.random.choice(index_size, data_turnover, replace=False).tolist() + [0, index_size]
             regime_change_periods = sorted(list(set(regime_change_periods)))
@@ -66,7 +65,14 @@ def policy_report_generator(monthly_turnover_rate_bins: List[List[int]], data_fr
                             output_folder: Path):
     resolved_index = resolve_index(data_frame_index)
 
-    policies = generate_policies(monthly_turnover_rate_bins, number_of_regimes, number_of_policies, len(resolved_index))
+    switches = [0] * 5 + [0.5] * 8 + [1] * 6 + [1.5] * 4 + [2] * 2
+    n_switches = len(switches)
+    switch_expectation = np.sum(
+        [0.5 * 8 / n_switches, 1 * 6 / n_switches, 1.5 * 4 / n_switches, 2 * 2 / n_switches]
+    )
+
+    policies = generate_policies(monthly_turnover_rate_bins, number_of_regimes, number_of_policies, len(resolved_index),
+                                 switch_expectation)
 
     for policy_bin, policies_list in policies.items():
         for i, policy in enumerate(policies_list):
@@ -100,7 +106,7 @@ if __name__ == '__main__':
     ]
 
     n_of_regimes = 5  # 3
-    n_of_policies = 100
+    n_of_policies = 10
     df_index = 'eval_period'  # hold_out
     target_index = 'sap'  # 'topix'
     dynamic_exp = True
