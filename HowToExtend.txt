@@ -1,0 +1,7 @@
+Merge Nikko strategy file with current file
+Extract TOPIX index from Nikko XLS with XLSData Extractor and merge it with TOPIXNikko
+Download data from Yahoo data provider (https://finance.yahoo.com/quote/%5EGSPC/history?p=%5EGSPC)
+Extract regime from Nikko file from column Exposure 1 with mapping
+Merge Yahoo data with SP500_TR.csv file
+Extend data range in Confuguration.py file
+Extend data range in DTB3.csv file from https://fred.stlouisfed.org/series/DTB3

@@ -17,8 +17,8 @@ def load_trail(trail_folder, model_name, trail):
     return df.columns, df.values
 
 
-FROM_ITERATION = 2000
-TO_ITERATIONS = 2005
+FROM_ITERATION = 2
+TO_ITERATIONS = 2600
 
 model_id = 'model.csv'
 train_model_id = 'model.csv'
